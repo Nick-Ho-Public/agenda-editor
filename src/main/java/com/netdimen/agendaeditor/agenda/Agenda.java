@@ -21,6 +21,8 @@ public class Agenda {
 
     private @Version @JsonIgnore Long version;
 
+    @OneToMany(mappedBy = "agenda", fetch = FetchType.EAGER, cascade = {CascadeType.REMOVE})
+    private List<AgendaItem> agendaItemList = new ArrayList<>();
 
     private Agenda() {
 
@@ -30,4 +32,8 @@ public class Agenda {
         this.name = name;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 }

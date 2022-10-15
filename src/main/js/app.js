@@ -45,6 +45,7 @@ class AgendaEditor extends React.Component {
                 path: agendaList.entity._links.profile.href,
                 headers: {'Accept': 'application/schema+json'}
             }).then(schema => {
+                delete schema.entity.properties.agendaItemList;
                 this.schema = schema.entity;
                 this.links = agendaList.entity._links;
                 return agendaList;
