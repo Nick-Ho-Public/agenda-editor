@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {BrowserRouter, Link, Route} from 'react-router-dom';
+import when from 'when';
 
 import client from './client';
 import follow from './follow';
@@ -27,6 +27,7 @@ class AgendaEditor extends React.Component {
         this.state = {agendas: [], attributes: [], pageSize: 2, links: {}};
         this.updatePageSize = this.updatePageSize.bind(this);
         this.onCreate = this.onCreate.bind(this);
+        this.onUpdate = this.onUpdate.bind(this);
         this.onDelete = this.onDelete.bind(this);
         this.onNavigate = this.onNavigate.bind(this);
     }
@@ -45,14 +46,46 @@ class AgendaEditor extends React.Component {
                 headers: {'Accept': 'application/schema+json'}
             }).then(schema => {
                 this.schema = schema.entity;
+                this.links = agendaList.entity._links;
                 return agendaList;
             });
-        }).done(agendaList => {
+        }).then(agendaList => { // <3>
+            return agendaList.entity._embedded.agendas.map(agenda =>
+                client({
+                    method: 'GET',
+                    path: agenda._links.self.href
+                })
+            );
+        }).then(agendaPromises => { // <4>
+            return when.all(agendaPromises);
+        }).done(agendas => { // <5>
             this.setState({
-                agendas: agendaList.entity._embedded.agendas,
+                agendas: agendas,
                 attributes: Object.keys(this.schema.properties),
                 pageSize: pageSize,
-                links: agendaList.entity._links
+                links: this.links
+            });
+        });
+    }
+
+    onNavigate(navUri) {
+        client({method: 'GET', path: navUri}).then(agendaList => {
+            this.links = agendaList.entity._links;
+
+            return agendaList.entity._embedded.agendas.map(agenda =>
+                client({
+                    method: 'GET',
+                    path: agenda._links.self.href
+                })
+            );
+        }).then(agendaPromises => {
+            return when.all(agendaPromises);
+        }).done(agendas => {
+            this.setState({
+                agendas: agendas,
+                attributes: Object.keys(this.schema.properties),
+                pageSize: this.state.pageSize,
+                links: this.links
             });
         });
     }
@@ -72,24 +105,32 @@ class AgendaEditor extends React.Component {
             if (typeof response.entity._links.last !== "undefined") {
                 this.onNavigate(response.entity._links.last.href);
             } else {
-                this.onNavigate(response.entity._links.first.href);
+                this.onNavigate(response.entity._links.self.href);
             }
         });
     }
 
-    onNavigate(navUri) {
-        client({method: 'GET', path: navUri}).done(agendaList => {
-            this.setState({
-                agendas: agendaList.entity._embedded.agendas,
-                attributes: this.state.attributes,
-                pageSize: this.state.pageSize,
-                links: agendaList.entity._links
-            });
+    onUpdate(agenda, updatedAgenda) {
+        client({
+            method: 'PUT',
+            path: agenda.entity._links.self.href,
+            entity: updatedAgenda,
+            headers: {
+                'Content-Type': 'application/json',
+                'If-Match': agenda.headers.Etag
+            }
+        }).done(response => {
+            this.loadFromServer(this.state.pageSize);
+        }, response => {
+            if (response.status.code === 412) {
+                alert('DENIED: Unable to update ' +
+                    agenda.entity._links.self.href + '. Your copy is stale.');
+            }
         });
     }
 
     onDelete(agenda) {
-        client({method: 'DELETE', path: agenda._links.self.href}).done(response => {
+        client({method: 'DELETE', path: agenda.entity._links.self.href}).done(response => {
             this.loadFromServer(this.state.pageSize);
         });
     }
@@ -107,8 +148,10 @@ class AgendaEditor extends React.Component {
                 <AgendaList agendas={this.state.agendas}
                             links={this.state.links}
                             pageSize={this.state.pageSize}
+                            attributes={this.state.attributes}
                             onNavigate={this.onNavigate}
                             onCreate={this.onCreate}
+                            onUpdate={this.onUpdate}
                             onDelete={this.onDelete}
                             updatePageSize={this.updatePageSize}/>
             </div>
@@ -160,7 +203,11 @@ class AgendaList extends React.Component {
 
     render() {
         var agendas = this.props.agendas.map(agenda =>
-                <Agenda key={agenda._links.self.href} agenda={agenda} onDelete={this.props.onDelete}/>
+                <Agenda key={agenda.entity._links.self.href}
+                        agenda={agenda}
+                        attributes={this.props.attributes}
+                        onUpdate={this.props.onUpdate}
+                        onDelete={this.props.onDelete}/>
         );
 
 
@@ -185,7 +232,8 @@ class AgendaList extends React.Component {
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Action</th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -214,7 +262,12 @@ class Agenda extends React.Component {
     render() {
         return (
             <tr>
-                <td>{this.props.agenda.name}</td>
+                <td>{this.props.agenda.entity.name}</td>
+                <td>
+                    <UpdateDialog agenda={this.props.agenda}
+                                  attributes={this.props.attributes}
+                                  onUpdate={this.props.onUpdate}/>
+                </td>
                 <td>
                     <button onClick={this.handleDelete}>Delete</button>
                 </td>
@@ -275,6 +328,55 @@ class CreateDialog extends React.Component {
     }
 
 }
+
+class UpdateDialog extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+        const updatedAgenda = {};
+        this.props.attributes.forEach(attribute => {
+            updatedAgenda[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+        });
+        this.props.onUpdate(this.props.agenda, updatedAgenda);
+        window.location = "#";
+    }
+
+    render() {
+        const inputs = this.props.attributes.map(attribute =>
+            <p key={this.props.agenda.entity[attribute]}>
+                <input type="text" placeholder={attribute}
+                       defaultValue={this.props.agenda.entity[attribute]}
+                       ref={attribute} className="field"/>
+            </p>
+        );
+
+        const dialogId = "updateAgenda-" + this.props.agenda.entity._links.self.href;
+
+        return (
+            <div key={this.props.agenda.entity._links.self.href}>
+                <a href={"#" + dialogId}>Update</a>
+                <div id={dialogId} className="modalDialog">
+                    <div>
+                        <a href="#" title="Close" className="close">X</a>
+
+                        <h2>Update an agenda</h2>
+
+                        <form>
+                            {inputs}
+                            <button onClick={this.handleSubmit}>Update</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+};
 
 ReactDOM.render( <App /> , document.getElementById('root'));
 

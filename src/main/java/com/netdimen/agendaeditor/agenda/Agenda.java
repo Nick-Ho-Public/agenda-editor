@@ -1,10 +1,12 @@
 package com.netdimen.agendaeditor.agenda;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Entity
@@ -17,8 +19,8 @@ public class Agenda {
 
     private String name;
 
-    @OneToMany(mappedBy = "agenda")
-    private List<AgendaItem> agendaItemList = new ArrayList<>();
+    private @Version @JsonIgnore Long version;
+
 
     private Agenda() {
 
