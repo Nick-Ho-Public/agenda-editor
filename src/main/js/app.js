@@ -24,7 +24,7 @@ class AgendaEditor extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {agendas: [], attributes: [], pageSize: 2, links: {}};
+        this.state = {agendas: [], attributes: [], pageSize: 5, links: {}};
         this.updatePageSize = this.updatePageSize.bind(this);
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
@@ -144,7 +144,6 @@ class AgendaEditor extends React.Component {
     render() {
         return (
             <div>
-                <CreateDialog attributes={this.state.attributes} onCreate={this.onCreate}/>
                 <AgendaList agendas={this.state.agendas}
                             links={this.state.links}
                             pageSize={this.state.pageSize}
@@ -211,38 +210,45 @@ class AgendaList extends React.Component {
         );
 
 
-        var navLinks = [];
+        var navLeftLinks = [];
+        var navRightLinks = [];
         if ("first" in this.props.links) {
-            navLinks.push(<button key="first" onClick={this.handleNavFirst}>&lt;&lt;</button>);
+            navLeftLinks.push(<button key="first" onClick={this.handleNavFirst}>&lt;&lt;</button>);
         }
         if ("prev" in this.props.links) {
-            navLinks.push(<button key="prev" onClick={this.handleNavPrev}>&lt;</button>);
+            navLeftLinks.push(<button key="prev" onClick={this.handleNavPrev}>&lt;</button>);
         }
         if ("next" in this.props.links) {
-            navLinks.push(<button key="next" onClick={this.handleNavNext}>&gt;</button>);
+            navRightLinks.push(<button key="next" onClick={this.handleNavNext}>&gt;</button>);
         }
         if ("last" in this.props.links) {
-            navLinks.push(<button key="last" onClick={this.handleNavLast}>&gt;&gt;</button>);
+            navRightLinks.push(<button key="last" onClick={this.handleNavLast}>&gt;&gt;</button>);
         }
 
         return (
             <div>
-                Page size: <input ref="pageSize" defaultValue={this.props.pageSize} onInput={this.handleInput}/>
                 <table>
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th></th>
-                            <th></th>
+                            <th>
+                                <CreateDialog attributes={this.props.attributes} onCreate={this.props.onCreate}/></th>
                         </tr>
                     </thead>
                     <tbody>
                         {agendas}
+                        <tr>
+                            <td colSpan={2}>{navLeftLinks}
+                                <select ref="pageSize" defaultValue={String(this.props.pageSize)} onChange ={this.handleInput}>
+                                    <option value="1">1</option>
+                                    <option value="5">5</option>
+                                    <option value="10">10</option>
+                                    <option value="20">20</option>
+                                </select> agendas per page {navRightLinks}
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
-                <div>
-                    {navLinks}
-                </div>
             </div>
         );
     }
@@ -260,6 +266,7 @@ class Agenda extends React.Component {
     }
 
     render() {
+        const dialogId = "deleteAgenda-" + this.props.agenda.entity._links.self.href;
         return (
             <tr>
                 <td>{this.props.agenda.entity.name}</td>
@@ -267,9 +274,9 @@ class Agenda extends React.Component {
                     <UpdateDialog agenda={this.props.agenda}
                                   attributes={this.props.attributes}
                                   onUpdate={this.props.onUpdate}/>
-                </td>
-                <td>
-                    <button onClick={this.handleDelete}>Delete</button>
+                    <div>
+                        <a href={"#"+dialogId} onClick={this.handleDelete}>Delete</a>
+                    </div>
                 </td>
             </tr>
         );
@@ -309,7 +316,7 @@ class CreateDialog extends React.Component {
 
         return (
             <div>
-                <a href="#createAgenda">Create</a>
+                <a href="#createAgenda">Create new agenda</a>
 
                 <div id="createAgenda" className="modalDialog">
                     <div>
