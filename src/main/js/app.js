@@ -178,7 +178,7 @@ class AgendaList extends React.Component {
 
         return (
             <div>
-                <input ref="pageSize" defaultValue={this.props.pageSize} onInput={this.handleInput}/>
+                Page size: <input ref="pageSize" defaultValue={this.props.pageSize} onInput={this.handleInput}/>
                 <table>
                     <thead>
                         <tr>
