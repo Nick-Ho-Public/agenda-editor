@@ -9,7 +9,8 @@ table {
 td, th {
     border: 1px solid #999;
     padding: 0.5rem;
-    text-align: left;
+    text-align: center;
+    min-width: 2em;
 }
 
 /*Classes for creating dialogs*/
