@@ -54,14 +54,16 @@ export default class AgendaItemEditor extends React.Component {
             return when.all(agendaItemPromises);
         }).done(agendaItems => { // <5>
             this.setState({
+                agenda: this.agenda,
                 agendaItems: agendaItems,
                 attributes: Object.keys(this.schema.properties),
             });
         });
     }
 
-    onCreate(newAgendaItem) {
+    onCreate(newAgendaItem, agenda) {
         follow(client, root, ['agendaItems']).then(agendaItemList => {
+            newAgendaItem.agenda = agenda.entity._links.self.href;
             return client({
                 method: 'POST',
                 path: agendaItemList.entity._links.self.href,
@@ -144,7 +146,7 @@ class AgendaItemList extends React.Component {
                         <tr>
                             <th>Phase</th>
                             <th>
-                                <CreateDialog attributes={this.props.attributes} onCreate={this.props.onCreate}/></th>
+                                <CreateDialog agenda={this.props.agenda} attributes={this.props.attributes} onCreate={this.props.onCreate}/></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -202,7 +204,7 @@ class CreateDialog extends React.Component {
         this.props.attributes.forEach(attribute => {
             newAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
         });
-        this.props.onCreate(newAgendaItem);
+        this.props.onCreate(newAgendaItem, this.props.agenda);
 
         // clear out the dialog's inputs
         this.props.attributes.forEach(attribute => {
