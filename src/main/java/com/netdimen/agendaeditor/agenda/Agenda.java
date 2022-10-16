@@ -22,6 +22,7 @@ public class Agenda {
     private String name;
 
     @OneToMany(mappedBy = "agenda", fetch = FetchType.EAGER, cascade = {CascadeType.REMOVE})
+    @OrderBy("itemOrder")
     private List<AgendaItem> agendaItemList = new ArrayList<>();
 
     private Agenda() {
