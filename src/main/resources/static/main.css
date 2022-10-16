@@ -1,5 +1,9 @@
-input.field {
+.field {
     width: 90%;
+    padding: 1px;
+    border-width: 1px;
+    box-sizing: unset;
+;
 }
 
 table {

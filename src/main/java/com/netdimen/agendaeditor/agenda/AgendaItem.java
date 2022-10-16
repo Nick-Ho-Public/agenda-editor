@@ -1,10 +1,12 @@
 package com.netdimen.agendaeditor.agenda;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netdimen.agendaeditor.agenda.Agenda;
 import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
@@ -23,9 +25,12 @@ public class AgendaItem {
     private @Version @JsonIgnore Long version;
 
     @NotNull
+    @JsonProperty(required = true)
+    @Min(value = 1, message = "Order must be larger than 1")
     private int itemOrder;
 
     @Convert(converter = PhaseConverter.class)
+    @JsonProperty(required = true)
     private Phase phase;
 
     private String content;
@@ -33,6 +38,8 @@ public class AgendaItem {
     private String objectives;
 
     @NotNull
+    @JsonProperty(required = true)
+    @Min(value = 0, message = "Duration must be positive")
     private Long duration;
 
     private boolean creditable;

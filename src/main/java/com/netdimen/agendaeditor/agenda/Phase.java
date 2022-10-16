@@ -9,14 +9,20 @@ public enum Phase {
     ACTION_ITEMS("Action Items"),
     CONCLUSION("Conclusion");
 
+
+    @JsonValue
     private String text;
 
     Phase(String text) {
         this.text = text;
     }
 
-    @JsonValue
     public String getText() {
+        return text;
+    }
+
+    @Override
+    public String toString() {
         return text;
     }
 

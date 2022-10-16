@@ -12,7 +12,11 @@ export default class AgendaItemEditor extends React.Component {
 
     constructor(props) {
         super(props);
-        this.state = {agenda: [], agendaItems: [], attributes: []};
+        this.state = {
+            agenda: [],
+            agendaItems: [],
+            attributes: [],
+            phases: [],};
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
         this.onDelete = this.onDelete.bind(this);
@@ -57,6 +61,7 @@ export default class AgendaItemEditor extends React.Component {
                 agenda: this.agenda,
                 agendaItems: agendaItems,
                 attributes: Object.keys(this.schema.properties),
+                phases: this.schema.properties.phase.enum,
             });
         });
     }
@@ -113,6 +118,7 @@ export default class AgendaItemEditor extends React.Component {
                 <AgendaItemList agenda={this.state.agenda}
                             agendaItems={this.state.agendaItems}
                             attributes={this.state.attributes}
+                            phases={this.state.phases}
                             onUpdate={this.onUpdate}
                             onDelete={this.onDelete}/>
                 <div>
@@ -134,6 +140,7 @@ class AgendaItemList extends React.Component {
                 <AgendaItem key={agendaItem.entity._links.self.href}
                         agendaItem={agendaItem}
                         attributes={this.props.attributes}
+                        phases={this.props.phases}
                         onUpdate={this.props.onUpdate}
                         onDelete={this.props.onDelete}/>
         );
@@ -176,6 +183,7 @@ class AgendaItem extends React.Component {
                         {this.props.agendaItem.entity.itemOrder}</a>
                     <UpdateDialog agendaItem={this.props.agendaItem}
                                   attributes={this.props.attributes}
+                                  phases={this.props.phases}
                                   onUpdate={this.props.onUpdate}
                                   onDelete={this.props.onDelete}/>
                 </td>
@@ -246,6 +254,9 @@ class UpdateDialog extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            creditable: this.props.agendaItem.entity.creditable,
+        };
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
@@ -253,24 +264,86 @@ class UpdateDialog extends React.Component {
     handleDelete(e) {
         e.preventDefault();
         this.props.onDelete(this.props.agendaItem);
-    }
-
-    handleSubmit(e) {
-        e.preventDefault();
-        const updatedAgendaItem = {};
-        this.props.attributes.forEach(attribute => {
-            updatedAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
-        });
-        this.props.onUpdate(this.props.agendaItem, updatedAgendaItem);
         window.location = "#";
     }
 
+    handleSubmit(e) {
+        if (this.refs.form.reportValidity()) {
+            e.preventDefault();
+            const updatedAgendaItem = {};
+            this.props.attributes.forEach(attribute => {
+                updatedAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+            });
+            this.props.onUpdate(this.props.agendaItem, updatedAgendaItem);
+            window.location = "#";
+        }
+    }
+
     render() {
-        const inputs = this.props.attributes.map(attribute =>
+        const phases = this.props.phases.map(phase =>
+            <option value={phase} key={phase}>
+                {phase}
+            </option>
+        )
+        const attributes = ['itemOrder', 'phase', 'content', 'objectives', 'duration', 'creditable']
+        const inputs = attributes.map(attribute =>
             <p key={attribute}>
-                <input type="text" placeholder={attribute}
-                       defaultValue={this.props.agendaItem.entity[attribute]}
-                       ref={attribute} className="field"/>
+                {(() => {
+                    if (attribute==='itemOrder' || attribute==='duration') {
+                        return (
+                            <span>
+                                {attribute==='itemOrder'? "Order:" : "Duration (min):"}
+                                <input type="number"
+                                       min={attribute==='itemOrder'?1:0}
+                                       step={1}
+                                       required={true}
+                                       placeholder={attribute}
+                                       defaultValue={this.props.agendaItem.entity[attribute]}
+                                       ref={attribute}
+                                       className="field"
+                                />
+                            </span>
+                        )
+                    } else if (attribute==='phase') {
+                        return (
+                            <span>
+                                {"Phase:"}
+                                <select required={true}
+                                        defaultValue={this.props.agendaItem.entity[attribute]}
+                                        ref={attribute}
+                                        className="field">
+                                    {phases}
+                                </select>
+                            </span>
+                        )
+                    } else if (attribute==='content' || attribute==='objectives') {
+                        return (
+                            <span>
+                                {attribute==='content'? "Content:" : "Objectives:"}
+                                <textarea
+                                    placeholder={attribute}
+                                    defaultValue={this.props.agendaItem.entity[attribute]}
+                                    ref={attribute}
+                                    className="field"
+                                />
+                            </span>
+                        )
+                    } else if (attribute==='creditable') {
+                        return (
+                            <label>
+                                Creditable :
+                                <input type="checkbox"
+                                       defaultChecked={this.props.agendaItem.entity[attribute]}
+                                       value={this.state.creditable}
+                                       onClick={()=>this.setState({
+                                               creditable: !this.state.creditable,
+                                           }
+                                       )}
+                                       ref={attribute}
+                                />
+                            </label>
+                        )
+                    }})()}
             </p>
         );
 
@@ -284,7 +357,7 @@ class UpdateDialog extends React.Component {
 
                         <h2>Update an agenda item</h2>
 
-                        <form>
+                        <form ref={"form"}>
                             {inputs}
                             <button onClick={this.handleSubmit}>Update</button>
                             <button onClick={this.handleDelete}>Delete</button>
