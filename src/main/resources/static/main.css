@@ -41,6 +41,7 @@ td, th {
 }
 
 .modalDialog > div {
+    text-align: center;
     width: 400px;
     position: relative;
     margin: 10% auto;
