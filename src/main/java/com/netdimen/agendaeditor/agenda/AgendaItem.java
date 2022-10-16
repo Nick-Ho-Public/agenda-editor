@@ -5,6 +5,7 @@ import com.netdimen.agendaeditor.agenda.Agenda;
 import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 @Data
@@ -21,14 +22,17 @@ public class AgendaItem {
 
     private @Version @JsonIgnore Long version;
 
+    @NotNull
     private int itemOrder;
 
-    private String phase;
+    @Convert(converter = PhaseConverter.class)
+    private Phase phase;
 
     private String content;
 
     private String objectives;
 
+    @NotNull
     private Long duration;
 
     private boolean creditable;
@@ -39,7 +43,7 @@ public class AgendaItem {
 
     public AgendaItem(int itemOrder, String phase, String content, String objectives, Long duration, boolean creditable, Agenda agenda) {
         this.itemOrder = itemOrder;
-        this.phase = phase;
+        this.phase = Phase.valueOf(phase);
         this.content = content;
         this.objectives = objectives;
         this.duration = duration;

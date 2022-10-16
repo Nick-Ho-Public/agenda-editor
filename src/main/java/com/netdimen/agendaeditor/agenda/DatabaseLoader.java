@@ -33,7 +33,7 @@ public class DatabaseLoader implements CommandLineRunner {
 
     private void createAgendaWithItem(int count) {
         Agenda agenda = new Agenda("Agenda sample" + count);
-        AgendaItem item = new AgendaItem(1, "Welcome", "", "", 15l, false, agenda);
+        AgendaItem item = new AgendaItem(1, Phase.WELCOME.name(), "", "", 15l, false, agenda);
         agendaRepository.save(agenda);
         agendaItemRepository.save(item);
     }
