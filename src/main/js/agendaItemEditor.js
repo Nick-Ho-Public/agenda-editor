@@ -111,10 +111,10 @@ export default class AgendaItemEditor extends React.Component {
         return (
             <div>
                 <div>{this.state.agenda.name}</div>
-                <div>
-                    <a href={"/"}>Back to Agenda list</a>
-                </div>
-                <CreateDialog agenda={this.state.agenda} attributes={this.state.attributes} onCreate={this.onCreate}/>
+                <CreateDialog agenda={this.state.agenda}
+                              attributes={this.state.attributes}
+                              phases={this.state.phases}
+                              onCreate={this.onCreate}/>
                 <AgendaItemList agenda={this.state.agenda}
                             agendaItems={this.state.agendaItems}
                             attributes={this.state.attributes}
@@ -201,30 +201,101 @@ class CreateDialog extends React.Component {
 
     constructor(props) {
         super(props);
+        this.state = {
+            creditable: false,
+        };
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.clearDialog = this.clearDialog.bind(this);
     }
 
     handleSubmit(e) {
-        e.preventDefault();
-        const newAgendaItem = {};
-        this.props.attributes.forEach(attribute => {
-            newAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
-        });
-        this.props.onCreate(newAgendaItem, this.props.agenda);
+        if (this.refs.form.reportValidity()) {
+            e.preventDefault();
+            const newAgendaItem = {};
+            this.props.attributes.forEach(attribute => {
+                newAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
+            });
+            this.props.onCreate(newAgendaItem, this.props.agenda);
 
-        // clear out the dialog's inputs
+            this.clearDialog()
+
+            // Navigate away from the dialog to hide it.
+            window.location = "#";
+        }
+    }
+
+    clearDialog() {
         this.props.attributes.forEach(attribute => {
             ReactDOM.findDOMNode(this.refs[attribute]).value = '';
         });
-
-        // Navigate away from the dialog to hide it.
-        window.location = "#";
+        this.setState({
+            creditable: false,
+        });
+        console.log(ReactDOM.findDOMNode(this.refs["content"]));
     }
 
     render() {
-        const inputs = this.props.attributes.map(attribute =>
+        const phases = this.props.phases.map(phase =>
+            <option value={phase} key={phase}>
+                {phase}
+            </option>
+        )
+        const attributes = ['itemOrder', 'phase', 'content', 'objectives', 'duration', 'creditable']
+
+        const inputs = attributes.map(attribute =>
             <p key={attribute}>
-                <input type="text" placeholder={attribute} ref={attribute} className="field"/>
+                {(() => {
+                    if (attribute==='itemOrder' || attribute==='duration') {
+                        return (
+                            <span>
+                                {attribute==='itemOrder'? "Order:" : "Duration (min):"}
+                                <input type="number"
+                                       min={attribute==='itemOrder'?1:0}
+                                       step={1}
+                                       required={true}
+                                       ref={attribute}
+                                       className="field"
+                                />
+                            </span>
+                        )
+                    } else if (attribute==='phase') {
+                        return (
+                            <span>
+                                {"Phase:"}
+                                <select required={true}
+                                        ref={attribute}
+                                        className="field">
+                                    {phases}
+                                </select>
+                            </span>
+                        )
+                    } else if (attribute==='content' || attribute==='objectives') {
+                        return (
+                            <span>
+                                {attribute==='content'? "Content:" : "Objectives:"}
+                                <textarea
+                                    required={attribute==='content'? this.state.creditable : false}
+                                    ref={attribute}
+                                    className="field"
+                                />
+                            </span>
+                        )
+                    } else if (attribute==='creditable') {
+                        return (
+                            <label>
+                                Creditable :
+                                <input type="checkbox"
+                                       checked={this.state.creditable}
+                                       value={this.state.creditable}
+                                       onClick={()=>this.setState({
+                                               creditable: !this.state.creditable,
+                                           }
+                                       )}
+                                       ref={attribute}
+                                />
+                            </label>
+                        )
+                    }})()}
             </p>
         );
 
@@ -238,7 +309,7 @@ class CreateDialog extends React.Component {
 
                         <h2>Create a new agenda item</h2>
 
-                        <form>
+                        <form ref={"form"}>
                             {inputs}
                             <button onClick={this.handleSubmit}>Create</button>
                         </form>
@@ -297,7 +368,6 @@ class UpdateDialog extends React.Component {
                                        min={attribute==='itemOrder'?1:0}
                                        step={1}
                                        required={true}
-                                       placeholder={attribute}
                                        defaultValue={this.props.agendaItem.entity[attribute]}
                                        ref={attribute}
                                        className="field"
@@ -321,7 +391,7 @@ class UpdateDialog extends React.Component {
                             <span>
                                 {attribute==='content'? "Content:" : "Objectives:"}
                                 <textarea
-                                    placeholder={attribute}
+                                    required={attribute==='content'? this.state.creditable : false}
                                     defaultValue={this.props.agendaItem.entity[attribute]}
                                     ref={attribute}
                                     className="field"
