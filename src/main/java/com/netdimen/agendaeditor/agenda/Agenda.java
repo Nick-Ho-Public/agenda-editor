@@ -17,9 +17,9 @@ public class Agenda {
     @GeneratedValue
     private Long id;
 
-    private String name;
-
     private @Version @JsonIgnore Long version;
+
+    private String name;
 
     @OneToMany(mappedBy = "agenda", fetch = FetchType.EAGER, cascade = {CascadeType.REMOVE})
     private List<AgendaItem> agendaItemList = new ArrayList<>();

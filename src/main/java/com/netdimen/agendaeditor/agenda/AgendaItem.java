@@ -1,9 +1,11 @@
 package com.netdimen.agendaeditor.agenda;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.netdimen.agendaeditor.agenda.Agenda;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Data
 @Entity
@@ -16,6 +18,8 @@ public class AgendaItem {
 
     @ManyToOne
     private Agenda agenda;
+
+    private @Version @JsonIgnore Long version;
 
     private int itemOrder;
 
@@ -43,4 +47,8 @@ public class AgendaItem {
         this.agenda = agenda;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 }
