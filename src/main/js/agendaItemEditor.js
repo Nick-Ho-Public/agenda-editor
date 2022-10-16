@@ -50,9 +50,9 @@ export default class AgendaItemEditor extends React.Component {
                     path: agendaItem._links.self.href
                 })
             );
-        }).then(agendaItemPromises => { // <4>
+        }).then(agendaItemPromises => {
             return when.all(agendaItemPromises);
-        }).done(agendaItems => { // <5>
+        }).done(agendaItems => {
             this.setState({
                 agenda: this.agenda,
                 agendaItems: agendaItems,
@@ -109,10 +109,10 @@ export default class AgendaItemEditor extends React.Component {
                 <div>
                     <a href={"/"}>Back to Agenda list</a>
                 </div>
+                <CreateDialog agenda={this.state.agenda} attributes={this.state.attributes} onCreate={this.onCreate}/>
                 <AgendaItemList agenda={this.state.agenda}
                             agendaItems={this.state.agendaItems}
                             attributes={this.state.attributes}
-                            onCreate={this.onCreate}
                             onUpdate={this.onUpdate}
                             onDelete={this.onDelete}/>
                 <div>
@@ -144,17 +144,16 @@ class AgendaItemList extends React.Component {
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Phase</th>
-                            <th>
-                                <CreateDialog agenda={this.props.agenda} attributes={this.props.attributes} onCreate={this.props.onCreate}/></th>
+                            <th>Content</th>
+                            <th>Objectives</th>
+                            <th>Duration (min)</th>
+                            <th>Creditable</th>
                         </tr>
                     </thead>
                     <tbody>
                         {agendaItems}
-                        <tr>
-                            <td colSpan={2}>TODO
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -166,26 +165,25 @@ class AgendaItem extends React.Component {
 
     constructor(props) {
         super(props);
-        this.handleDelete = this.handleDelete.bind(this);
-    }
-
-    handleDelete() {
-        this.props.onDelete(this.props.agendaItem);
     }
 
     render() {
-        const dialogId = "deleteAgendaItem-" + this.props.agendaItem.entity._links.self.href;
+        const dialogId = "updateAgendaItem-" + this.props.agendaItem.entity._links.self.href;
         return (
             <tr>
-                <td>{this.props.agendaItem.entity.phase}</td>
                 <td>
+                    <a href={"#"+dialogId}>
+                        {this.props.agendaItem.entity.itemOrder}</a>
                     <UpdateDialog agendaItem={this.props.agendaItem}
                                   attributes={this.props.attributes}
-                                  onUpdate={this.props.onUpdate}/>
-                    <div>
-                        <a href={"#"+dialogId} onClick={this.handleDelete}>Delete</a>
-                    </div>
+                                  onUpdate={this.props.onUpdate}
+                                  onDelete={this.props.onDelete}/>
                 </td>
+                <td>{this.props.agendaItem.entity.phase}</td>
+                <td>{this.props.agendaItem.entity.content}</td>
+                <td>{this.props.agendaItem.entity.objectives}</td>
+                <td>{this.props.agendaItem.entity.duration} min</td>
+                <td>{this.props.agendaItem.entity.creditable?"Yes":""}</td>
             </tr>
         );
     }
@@ -248,7 +246,13 @@ class UpdateDialog extends React.Component {
 
     constructor(props) {
         super(props);
+        this.handleDelete = this.handleDelete.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleDelete(e) {
+        e.preventDefault();
+        this.props.onDelete(this.props.agendaItem);
     }
 
     handleSubmit(e) {
@@ -263,7 +267,7 @@ class UpdateDialog extends React.Component {
 
     render() {
         const inputs = this.props.attributes.map(attribute =>
-            <p key={this.props.agendaItem.entity[attribute]}>
+            <p key={attribute}>
                 <input type="text" placeholder={attribute}
                        defaultValue={this.props.agendaItem.entity[attribute]}
                        ref={attribute} className="field"/>
@@ -274,7 +278,6 @@ class UpdateDialog extends React.Component {
 
         return (
             <div key={this.props.agendaItem.entity._links.self.href}>
-                <a href={"#" + dialogId}>Update</a>
                 <div id={dialogId} className="modalDialog">
                     <div>
                         <a href="#" title="Close" className="close">X</a>
@@ -284,6 +287,7 @@ class UpdateDialog extends React.Component {
                         <form>
                             {inputs}
                             <button onClick={this.handleSubmit}>Update</button>
+                            <button onClick={this.handleDelete}>Delete</button>
                         </form>
                     </div>
                 </div>
