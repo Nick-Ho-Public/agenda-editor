@@ -257,7 +257,7 @@ class Agenda extends React.Component {
         const dialogId = "deleteAgenda-" + this.props.agenda.entity._links.self.href;
         return (
             <tr>
-                <td>{this.props.agenda.entity.name}</td>
+                <td><a href={"agenda-"+this.props.agenda.entity._links.self.href.split("/").slice(-1)}>{this.props.agenda.entity.name}</a></td>
                 <td>
                     <UpdateDialog agenda={this.props.agenda}
                                   attributes={this.props.attributes}
@@ -304,13 +304,13 @@ class CreateDialog extends React.Component {
 
         return (
             <div>
-                <a href="#createAgenda">Create new agenda</a>
+                <a href="#createAgenda">Create a new agenda</a>
 
                 <div id="createAgenda" className="modalDialog">
                     <div>
                         <a href="#" title="Close" className="close">X</a>
 
-                        <h2>Create new agenda</h2>
+                        <h2>Create a new agenda</h2>
 
                         <form>
                             {inputs}
