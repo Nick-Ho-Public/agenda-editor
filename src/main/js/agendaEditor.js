@@ -132,7 +132,7 @@ export default class AgendaEditor extends React.Component {
     render() {
         return (
             <div>
-                <a href="createAgenda">Create Agenda with items in one single transaction</a>
+                <a href="transaction">Create Agenda with items in one single transaction</a>
                 <AgendaList agendas={this.state.agendas}
                             links={this.state.links}
                             pageSize={this.state.pageSize}

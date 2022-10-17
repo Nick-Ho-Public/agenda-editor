@@ -1,6 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import when from 'when';
 
 import client from './client';
 import follow from './follow';
@@ -13,14 +12,18 @@ export default class AgendaTransactionEditor extends React.Component {
         super(props);
         this.state = {
             agendaName: "",
-            agenda: [],
+            agenda: null,
+            agendaItemID: 1,
             agendaItems: [],
             attributes: [],
-            phases: [],};
+            phases: [],
+        };
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
         this.onDelete = this.onDelete.bind(this);
+        this.saveTransaction = this.saveTransaction.bind(this);
         this.loadFromServer = this.loadFromServer.bind(this);
+        this.serializeAgendaItem = this.serializeAgendaItem.bind(this);
     }
 
     componentDidMount() {
@@ -37,76 +40,68 @@ export default class AgendaTransactionEditor extends React.Component {
                 delete schema.entity.properties.agenda;
                 this.schema = schema.entity;
             });
-        }).then(response => {
-            return client({
-                method: 'GET',
-                path: root + '/agendas/' + agendaId,
-            });
-        }).then(agenda => {
-            this.agenda = agenda;
-            return client({
-                method: 'GET',
-                path: agenda.entity._links.agendaItemList.href,
-            });
-        }).then(agendaItemList => {
-            return agendaItemList.entity._embedded.agendaItems.map(agendaItem =>
-                client({
-                    method: 'GET',
-                    path: agendaItem._links.self.href
-                })
-            );
-        }).then(agendaItemPromises => {
-            return when.all(agendaItemPromises);
         }).done(agendaItems => {
             this.setState({
-                agendaName: this.agenda.entity.name,
-                agenda: this.agenda,
-                agendaItems: agendaItems,
                 attributes: Object.keys(this.schema.properties),
                 phases: this.schema.properties.phase.enum,
             });
         });
     }
 
-    onCreate(newAgendaItem, agenda) {
-        follow(client, root, ['agendaItems']).then(agendaItemList => {
-            newAgendaItem.agenda = agenda.entity._links.self.href;
-            return client({
-                method: 'POST',
-                path: agendaItemList.entity._links.self.href,
-                entity: newAgendaItem,
-                headers: {'Content-Type': 'application/json'}
-            });
-        }).then(response => {
-            return follow(client, root, ['agendaItems']);
-        }).done(response => {
-            this.loadFromServer()
+    serializeAgendaItem(agendaItem) {
+        this.state.attributes.forEach(attribute => {
+            if (attribute === "itemOrder" || attribute === "duration") {
+                agendaItem[attribute] = parseInt(agendaItem[attribute])
+            } else if (attribute === "creditable") {
+                agendaItem[attribute] = new Boolean(agendaItem[attribute] === "true")
+            }
+        })
+        return agendaItem;
+    }
+
+    onCreate(newAgendaItem) {
+        newAgendaItem = this.serializeAgendaItem(newAgendaItem);
+        newAgendaItem = {
+            "entity": Object.assign(
+                {},
+                newAgendaItem,
+                {"_links": {
+                    "self": {
+                        "href": this.state.agendaItemID,
+                    }
+                }})
+        };
+        this.setState({
+            agendaItems: [...this.state.agendaItems, newAgendaItem],
+            agendaItemID: this.state.agendaItemID + 1,
         });
     }
 
-    onUpdate(agendaItem, updatedAgendaItem) {
-        client({
-            method: 'PUT',
-            path: agendaItem.entity._links.self.href,
-            entity: updatedAgendaItem,
-            headers: {
-                'Content-Type': 'application/json',
-                'If-Match': agendaItem.headers.Etag
-            }
-        }).done(response => {
-            this.loadFromServer();
-        }, response => {
-            if (response.status.code === 412) {
-                alert('DENIED: Unable to update ' +
-                    agendaItem.entity._links.self.href + '. Your copy is stale.');
-            }
+    onUpdate(idx, updatedAgendaItem) {
+        updatedAgendaItem = this.serializeAgendaItem(updatedAgendaItem);
+        updatedAgendaItem = {
+            "entity": Object.assign(
+                {},
+                updatedAgendaItem,
+                {"_links": {
+                        "self": {
+                            "href": this.state.agendaItems[idx].entity._links.self.href,
+                        }
+                    }})
+        };
+        this.setState({
+            agendaItems: [...this.state.agendaItems.slice(0,idx), updatedAgendaItem, ...this.state.agendaItems.slice(idx+1)],
         });
     }
 
-    onDelete(agendaItem) {
-        client({method: 'DELETE', path: agendaItem.entity._links.self.href}).done(response => {
-            this.loadFromServer();
+    onDelete(idx) {
+        this.setState({
+            agendaItems: [...this.state.agendaItems.slice(0,idx), ...this.state.agendaItems.slice(idx+1)],
         });
+    }
+
+    saveTransaction() {
+
     }
 
     render() {
@@ -115,10 +110,10 @@ export default class AgendaTransactionEditor extends React.Component {
         var warningText = "";
         var duration = 0;
         var creditable = 0;
-        this.state.agendaItems.map(agenda => {
-            duration = duration + agenda.entity.duration;
-            if (agenda.entity.creditable) {
-                creditable = creditable + agenda.entity.duration;
+        this.state.agendaItems.map(agendaitem => {
+            duration = duration + agendaitem.entity.duration;
+            if (agendaitem.entity.creditable) {
+                creditable = creditable + agendaitem.entity.duration;
             }
         });
         if (Math.floor(duration/60) >= 1) {
@@ -163,6 +158,9 @@ export default class AgendaTransactionEditor extends React.Component {
                     {"Total Creditable Minutes: " + creditableText}
                 </div>
                 <div className={"warning"}>{warningText}</div>
+
+                <button className="pure-button pure-button-primary" onClick={this.saveTransaction()}>Save</button>
+
                 <div>
                     <a href={"/"}>Back to Agenda list</a>
                 </div>
@@ -193,6 +191,7 @@ class AgendaItemList extends React.Component {
                         e.preventDefault();
 
                         let children = Array.from(e.target.parentNode.parentNode.children);
+                        if (e.target.tagName === "A" || row.tagName === "A") return;
                         if (children.indexOf(e.target.parentNode) > children.indexOf(row)) {
                             e.target.parentNode.after(row);
                         } else {
@@ -200,22 +199,23 @@ class AgendaItemList extends React.Component {
                         }
                     }}>
                     <td>
-                        <a href={"#" + dialogId}>
+                        <a draggable={false} href={"#" + dialogId}>
                             {agendaItem.entity.itemOrder}</a>
                     </td>
                     <td>{agendaItem.entity.phase}</td>
                     <td>{agendaItem.entity.content}</td>
                     <td>{agendaItem.entity.objectives}</td>
                     <td>{agendaItem.entity.duration} min</td>
-                    <td>{agendaItem.entity.creditable ? "Yes" : ""}</td>
+                    <td>{agendaItem.entity.creditable == true ? "Yes" : ""}</td>
                 </tr>
             )
             }
         );
 
-        var updateDialogs = this.props.agendaItems.map(agendaItem =>
+        var updateDialogs = this.props.agendaItems.map((agendaItem, idx) =>
             <UpdateDialog key={agendaItem.entity._links.self.href}
-                        agendaItem={agendaItem}
+                          agendaItem={agendaItem}
+                          idx={idx}
                         attributes={this.props.attributes}
                         phases={this.props.phases}
                         onUpdate={this.props.onUpdate}
@@ -374,7 +374,7 @@ class UpdateDialog extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            creditable: this.props.agendaItem.entity.creditable,
+            creditable: this.props.agendaItem.entity.creditable == true,
         };
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -382,7 +382,7 @@ class UpdateDialog extends React.Component {
 
     handleDelete(e) {
         e.preventDefault();
-        this.props.onDelete(this.props.agendaItem);
+        this.props.onDelete(this.props.idx);
         window.location = "#";
     }
 
@@ -393,7 +393,7 @@ class UpdateDialog extends React.Component {
             this.props.attributes.forEach(attribute => {
                 updatedAgendaItem[attribute] = ReactDOM.findDOMNode(this.refs[attribute]).value.trim();
             });
-            this.props.onUpdate(this.props.agendaItem, updatedAgendaItem);
+            this.props.onUpdate(this.props.idx, updatedAgendaItem);
             window.location = "#";
         }
     }
@@ -451,7 +451,7 @@ class UpdateDialog extends React.Component {
                             <label>
                                 Creditable :
                                 <input type="checkbox"
-                                       defaultChecked={this.props.agendaItem.entity[attribute]}
+                                       defaultChecked={this.props.agendaItem.entity[attribute] == true}
                                        value={this.state.creditable}
                                        onClick={()=>this.setState({
                                                creditable: !this.state.creditable,

@@ -14,7 +14,7 @@ export default class AgendaItemEditor extends React.Component {
         super(props);
         this.state = {
             agendaName: "",
-            agenda: [],
+            agenda: null,
             agendaItems: [],
             attributes: [],
             phases: [],};
@@ -116,10 +116,10 @@ export default class AgendaItemEditor extends React.Component {
         var warningText = "";
         var duration = 0;
         var creditable = 0;
-        this.state.agendaItems.map(agenda => {
-            duration = duration + agenda.entity.duration;
-            if (agenda.entity.creditable) {
-                creditable = creditable + agenda.entity.duration;
+        this.state.agendaItems.map(agendaitem => {
+            duration = duration + agendaitem.entity.duration;
+            if (agendaitem.entity.creditable) {
+                creditable = creditable + agendaitem.entity.duration;
             }
         });
         if (Math.floor(duration/60) >= 1) {
@@ -137,16 +137,7 @@ export default class AgendaItemEditor extends React.Component {
         };
         return (
             <div>
-                Name:
-                <input type="text"
-                       placeholder={"name"}
-                       ref={"agendaName"}
-                       maxLength={255}
-                       value={this.state.agendaName}
-                       onChange={(e) =>
-                           this.setState({agendaName: e.target.value})
-                        }
-                />
+                <h2>{this.state.agendaName}</h2>
                 <CreateDialog agenda={this.state.agenda}
                               attributes={this.state.attributes}
                               phases={this.state.phases}
@@ -194,6 +185,7 @@ class AgendaItemList extends React.Component {
                         e.preventDefault();
 
                         let children = Array.from(e.target.parentNode.parentNode.children);
+                        if (e.target.tagName === "A" || row.tagName === "A") return;
                         if (children.indexOf(e.target.parentNode) > children.indexOf(row)) {
                             e.target.parentNode.after(row);
                         } else {
@@ -201,7 +193,7 @@ class AgendaItemList extends React.Component {
                         }
                     }}>
                     <td>
-                        <a href={"#" + dialogId}>
+                        <a draggable={false} href={"#" + dialogId}>
                             {agendaItem.entity.itemOrder}</a>
                     </td>
                     <td>{agendaItem.entity.phase}</td>
