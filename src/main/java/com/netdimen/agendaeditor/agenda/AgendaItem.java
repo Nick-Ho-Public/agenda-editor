@@ -33,8 +33,10 @@ public class AgendaItem {
     @JsonProperty(required = true)
     private Phase phase;
 
+    @Column(columnDefinition="TEXT")
     private String content;
 
+    @Column(columnDefinition="TEXT")
     private String objectives;
 
     @NotNull

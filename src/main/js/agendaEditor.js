@@ -201,21 +201,21 @@ class AgendaList extends React.Component {
         var navLeftLinks = [];
         var navRightLinks = [];
         if ("first" in this.props.links) {
-            navLeftLinks.push(<button key="first" onClick={this.handleNavFirst}>&lt;&lt;</button>);
+            navLeftLinks.push(<button style={{"fontSize": "75%", "margin": "1px"}} className={"pure-button"} key="first" onClick={this.handleNavFirst}>&lt;&lt;</button>);
         }
         if ("prev" in this.props.links) {
-            navLeftLinks.push(<button key="prev" onClick={this.handleNavPrev}>&lt;</button>);
+            navLeftLinks.push(<button style={{"fontSize": "75%", "margin": "1px"}} className={"pure-button"} key="prev" onClick={this.handleNavPrev}>&lt;</button>);
         }
         if ("next" in this.props.links) {
-            navRightLinks.push(<button key="next" onClick={this.handleNavNext}>&gt;</button>);
+            navRightLinks.push(<button style={{"fontSize": "75%", "margin": "1px"}} className={"pure-button"} key="next" onClick={this.handleNavNext}>&gt;</button>);
         }
         if ("last" in this.props.links) {
-            navRightLinks.push(<button key="last" onClick={this.handleNavLast}>&gt;&gt;</button>);
+            navRightLinks.push(<button style={{"fontSize": "75%", "margin": "1px"}} className={"pure-button"} key="last" onClick={this.handleNavLast}>&gt;&gt;</button>);
         }
 
         return (
             <div>
-                <table>
+                <table className="pure-table">
                     <thead>
                         <tr>
                             <th>Name</th>
@@ -298,13 +298,13 @@ class CreateDialog extends React.Component {
     render() {
         const inputs = this.props.attributes.map(attribute =>
             <p key={attribute}>
-                <input type="text" placeholder={attribute} ref={attribute} className="field"/>
+                <input type="text" maxLength={255} placeholder={attribute} ref={attribute} className="field"/>
             </p>
         );
 
         return (
             <div>
-                <a href="#createAgenda">Create a new agenda</a>
+                <a href="#createAgenda">Create</a>
 
                 <div id="createAgenda" className="modalDialog">
                     <div>
@@ -312,7 +312,7 @@ class CreateDialog extends React.Component {
 
                         <h2>Create a new agenda</h2>
 
-                        <form>
+                        <form className="pure-form">
                             {inputs}
                             <button onClick={this.handleSubmit}>Create</button>
                         </form>
@@ -345,6 +345,7 @@ class UpdateDialog extends React.Component {
         const inputs = this.props.attributes.map(attribute =>
             <p key={this.props.agenda.entity[attribute]}>
                 <input type="text" placeholder={attribute}
+                       maxLength={255}
                        defaultValue={this.props.agenda.entity[attribute]}
                        ref={attribute} className="field"/>
             </p>
@@ -361,7 +362,7 @@ class UpdateDialog extends React.Component {
 
                         <h2>Update an agenda</h2>
 
-                        <form>
+                        <form className="pure-form">
                             {inputs}
                             <button onClick={this.handleSubmit}>Update</button>
                         </form>

@@ -141,7 +141,7 @@ export default class AgendaItemEditor extends React.Component {
                 <input type="text"
                        placeholder={"name"}
                        ref={"agendaName"}
-                       className="field"
+                       maxLength={255}
                        value={this.state.agendaName}
                        onChange={(e) =>
                            this.setState({agendaName: e.target.value})
@@ -157,11 +157,13 @@ export default class AgendaItemEditor extends React.Component {
                             phases={this.state.phases}
                             onUpdate={this.onUpdate}
                             onDelete={this.onDelete}/>
-                <pre>
-                    {"Total Duration: " + durationText + "     Total Creditable Minutes: " +
-                        creditableText + " "}
-                </pre>
-                <pre className={"warning"}>{warningText}</pre>
+                <div>
+                    {"Total Duration: " + durationText}
+                </div>
+                <div>
+                    {"Total Creditable Minutes: " + creditableText}
+                </div>
+                <div className={"warning"}>{warningText}</div>
                 <div>
                     <a href={"/"}>Back to Agenda list</a>
                 </div>
@@ -188,8 +190,8 @@ class AgendaItemList extends React.Component {
 
 
         return (
-            <div>
-                <table>
+            <div style={{"overflowX":"auto"}}>
+                <table className="pure-table">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -272,7 +274,7 @@ class CreateDialog extends React.Component {
         this.setState({
             creditable: false,
         });
-        console.log(ReactDOM.findDOMNode(this.refs["content"]));
+        ReactDOM.findDOMNode(this.refs["phase"]).value = "Welcome";
     }
 
     render() {
@@ -342,7 +344,7 @@ class CreateDialog extends React.Component {
 
         return (
             <div>
-                <a href="#createAgendaItem">Create a new agenda item</a>
+                <a href="#createAgendaItem">Create</a>
 
                 <div id="createAgendaItem" className="modalDialog">
                     <div>
@@ -350,7 +352,7 @@ class CreateDialog extends React.Component {
 
                         <h2>Create a new agenda item</h2>
 
-                        <form ref={"form"}>
+                        <form ref={"form"} className="pure-form">
                             {inputs}
                             <button onClick={this.handleSubmit}>Create</button>
                         </form>
@@ -468,7 +470,7 @@ class UpdateDialog extends React.Component {
 
                         <h2>Update an agenda item</h2>
 
-                        <form ref={"form"}>
+                        <form ref={"form"} className="pure-form">
                             {inputs}
                             <button onClick={this.handleSubmit}>Update</button>
                             <button onClick={this.handleDelete}>Delete</button>
