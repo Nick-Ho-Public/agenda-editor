@@ -1,10 +1,18 @@
-.field {
-    width: 90%;
-    padding: 1px;
-    border-width: 1px;
-    box-sizing: unset;
-;
+pre {
+    display: inline;
 }
+
+.warning {
+    color: darkred;
+;
+
+}.field {
+     width: 90%;
+     padding: 1px;
+     border-width: 1px;
+     box-sizing: unset;
+ ;
+ }
 
 table {
     border-collapse: collapse;

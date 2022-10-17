@@ -13,6 +13,7 @@ export default class AgendaItemEditor extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            agendaName: "",
             agenda: [],
             agendaItems: [],
             attributes: [],
@@ -20,10 +21,11 @@ export default class AgendaItemEditor extends React.Component {
         this.onCreate = this.onCreate.bind(this);
         this.onUpdate = this.onUpdate.bind(this);
         this.onDelete = this.onDelete.bind(this);
+        this.loadFromServer = this.loadFromServer.bind(this);
     }
 
     componentDidMount() {
-        this.loadFromServer(this.state.pageSize);
+        this.loadFromServer();
     }
 
     loadFromServer() {
@@ -58,6 +60,7 @@ export default class AgendaItemEditor extends React.Component {
             return when.all(agendaItemPromises);
         }).done(agendaItems => {
             this.setState({
+                agendaName: this.agenda.entity.name,
                 agenda: this.agenda,
                 agendaItems: agendaItems,
                 attributes: Object.keys(this.schema.properties),
@@ -108,9 +111,37 @@ export default class AgendaItemEditor extends React.Component {
     }
 
     render() {
+        var durationText;
+        var creditableText;
+        var warningText = "";
+        var duration = 0;
+        var creditable = 0;
+        this.state.agendaItems.map(agenda => {
+            duration = duration + agenda.entity.duration;
+            if (agenda.entity.creditable) {
+                creditable = creditable + agenda.entity.duration;
+            }
+        });
+        if (Math.floor(duration/60) >= 1) {
+            durationText = Math.floor(duration/60) + " hr " + duration % 60 + " min"
+        } else {
+            durationText = duration + " min";
+        };
+        if (Math.floor(creditable/60) >= 1) {
+            creditableText = Math.floor(creditable/60) + " hr " + creditable % 60 + " min"
+        } else {
+            creditableText = creditable + " min";
+            if (creditable < 15) {
+                warningText = "(Attention: < 15 min!)"
+            }
+        };
         return (
             <div>
-                <div>{this.state.agenda.name}</div>
+                <input type="text"
+                       placeholder={"name"}
+                       ref={"agendaName"}
+                       className="field"
+                />
                 <CreateDialog agenda={this.state.agenda}
                               attributes={this.state.attributes}
                               phases={this.state.phases}
@@ -121,6 +152,11 @@ export default class AgendaItemEditor extends React.Component {
                             phases={this.state.phases}
                             onUpdate={this.onUpdate}
                             onDelete={this.onDelete}/>
+                <pre>
+                    {"Total Duration: " + durationText + "     Total Creditable Minutes: " +
+                        creditableText + " "}
+                </pre>
+                <pre className={"warning"}>{warningText}</pre>
                 <div>
                     <a href={"/"}>Back to Agenda list</a>
                 </div>
