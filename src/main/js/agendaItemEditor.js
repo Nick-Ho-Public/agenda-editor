@@ -137,10 +137,15 @@ export default class AgendaItemEditor extends React.Component {
         };
         return (
             <div>
+                Name:
                 <input type="text"
                        placeholder={"name"}
                        ref={"agendaName"}
                        className="field"
+                       value={this.state.agendaName}
+                       onChange={(e) =>
+                           this.setState({agendaName: e.target.value})
+                        }
                 />
                 <CreateDialog agenda={this.state.agenda}
                               attributes={this.state.attributes}
