@@ -179,15 +179,49 @@ class AgendaItemList extends React.Component {
     }
 
     render() {
-        var agendaItems = this.props.agendaItems.map(agendaItem =>
-                <AgendaItem key={agendaItem.entity._links.self.href}
+        var row;
+
+        var agendaItems = this.props.agendaItems.map(agendaItem => {
+            const dialogId = "updateAgendaItem-" + agendaItem.entity._links.self.href;
+            return(
+                <tr key={agendaItem.entity._links.self.href}
+                    className={"draggable"}
+                    draggable={true}
+                    onDragStart={e => {
+                        row = e.target;
+                    }}
+                    onDragOver={e => {
+                        e.preventDefault();
+
+                        let children = Array.from(e.target.parentNode.parentNode.children);
+                        if (children.indexOf(e.target.parentNode) > children.indexOf(row)) {
+                            e.target.parentNode.after(row);
+                        } else {
+                            e.target.parentNode.before(row);
+                        }
+                    }}>
+                    <td>
+                        <a href={"#" + dialogId}>
+                            {agendaItem.entity.itemOrder}</a>
+                    </td>
+                    <td>{agendaItem.entity.phase}</td>
+                    <td>{agendaItem.entity.content}</td>
+                    <td>{agendaItem.entity.objectives}</td>
+                    <td>{agendaItem.entity.duration} min</td>
+                    <td>{agendaItem.entity.creditable ? "Yes" : ""}</td>
+                </tr>
+            )
+            }
+        );
+
+        var updateDialogs = this.props.agendaItems.map(agendaItem =>
+            <UpdateDialog key={agendaItem.entity._links.self.href}
                         agendaItem={agendaItem}
                         attributes={this.props.attributes}
                         phases={this.props.phases}
                         onUpdate={this.props.onUpdate}
                         onDelete={this.props.onDelete}/>
         );
-
 
         return (
             <div style={{"overflowX":"auto"}}>
@@ -206,36 +240,8 @@ class AgendaItemList extends React.Component {
                         {agendaItems}
                     </tbody>
                 </table>
+                {updateDialogs}
             </div>
-        );
-    }
-}
-
-class AgendaItem extends React.Component {
-
-    constructor(props) {
-        super(props);
-    }
-
-    render() {
-        const dialogId = "updateAgendaItem-" + this.props.agendaItem.entity._links.self.href;
-        return (
-            <tr>
-                <td>
-                    <a href={"#"+dialogId}>
-                        {this.props.agendaItem.entity.itemOrder}</a>
-                    <UpdateDialog agendaItem={this.props.agendaItem}
-                                  attributes={this.props.attributes}
-                                  phases={this.props.phases}
-                                  onUpdate={this.props.onUpdate}
-                                  onDelete={this.props.onDelete}/>
-                </td>
-                <td>{this.props.agendaItem.entity.phase}</td>
-                <td>{this.props.agendaItem.entity.content}</td>
-                <td>{this.props.agendaItem.entity.objectives}</td>
-                <td>{this.props.agendaItem.entity.duration} min</td>
-                <td>{this.props.agendaItem.entity.creditable?"Yes":""}</td>
-            </tr>
         );
     }
 }

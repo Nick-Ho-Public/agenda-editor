@@ -11,11 +11,16 @@ tr:nth-of-type(odd) {
     background: #eee;
 }
 
+.draggable{
+    cursor:all-scroll;
+}
+
 th {
     background: #333;
     color: white;
     font-weight: bold;
 }
+
 td, th {
     min-height: 20px;
     word-break: break-word;
@@ -68,6 +73,7 @@ pre {
     padding: 1px;
     border-width: 1px;
     box-sizing: unset;
+    resize: none;
  }
 
 table {
