@@ -101,7 +101,26 @@ export default class AgendaTransactionEditor extends React.Component {
     }
 
     saveTransaction() {
-
+        var agendaItems = [];
+        this.state.agendaItems.forEach(agendaItem => {
+            delete agendaItem.entity._links;
+            agendaItems.push(agendaItem.entity);
+        });
+        follow(client, root, ['agendas']).then(agendaList => {
+            return client({
+                method: 'POST',
+                path: agendaList.entity._links.self.href,
+                entity: {
+                    "name": this.state.agendaName,
+                    "agendaItems": agendaItems,
+                },
+                headers: {'Content-Type': 'application/json'}
+            });
+        }).done(response => {
+            window.location = "/";
+        }, response => {
+            alert('Failed to create. Check the data and try again.');
+        });
     }
 
     render() {
@@ -159,7 +178,7 @@ export default class AgendaTransactionEditor extends React.Component {
                 </div>
                 <div className={"warning"}>{warningText}</div>
 
-                <button className="pure-button pure-button-primary" onClick={this.saveTransaction()}>Save</button>
+                <button className="pure-button pure-button-primary" onClick={this.saveTransaction}>Save</button>
 
                 <div>
                     <a href={"/"}>Back to Agenda list</a>

@@ -33,6 +33,11 @@ public class Agenda {
         this.name = name;
     }
 
+    public Agenda(String name, List<AgendaItem> items) {
+        this.name = name;
+        this.agendaItemList = items;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(getId());
