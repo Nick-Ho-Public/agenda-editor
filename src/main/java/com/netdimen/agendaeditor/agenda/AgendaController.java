@@ -13,7 +13,7 @@ public class AgendaController {
         this.agendaRepository = agendaRepository;
     }
 
-    @GetMapping({"/","/agenda-{id}"})
+    @GetMapping({"/","/agenda-{id}","/transaction"})
     public String index() {
 
         return "index";
